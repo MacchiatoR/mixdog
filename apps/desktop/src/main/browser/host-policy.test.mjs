@@ -3,10 +3,29 @@ import test from 'node:test';
 import {
   assertBrowserTaskCleanupContext,
   browserLocalInputOptions,
+  browserNativeViewEnabled,
   browserUrlPolicyFromEnvironment,
   browserViewportEmulation,
   pendingSessionWork,
 } from './host-policy.ts';
+
+test('native presentation defaults on and preserves explicit pixel-mode opt-outs', (t) => {
+  const saved = process.env.MIXDOG_BROWSER_NATIVE_VIEW;
+  t.after(() => {
+    if (saved === undefined) delete process.env.MIXDOG_BROWSER_NATIVE_VIEW;
+    else process.env.MIXDOG_BROWSER_NATIVE_VIEW = saved;
+  });
+  delete process.env.MIXDOG_BROWSER_NATIVE_VIEW;
+  assert.equal(browserNativeViewEnabled(), true);
+  for (const value of ['', '1', 'true', 'Yes']) {
+    process.env.MIXDOG_BROWSER_NATIVE_VIEW = value;
+    assert.equal(browserNativeViewEnabled(), true);
+  }
+  for (const value of ['0', 'false', 'no', 'invalid']) {
+    process.env.MIXDOG_BROWSER_NATIVE_VIEW = value;
+    assert.equal(browserNativeViewEnabled(), false);
+  }
+});
 
 test('URL policy reads the private-network flag and trimmed domain list from the environment', (t) => {
   const saved = {

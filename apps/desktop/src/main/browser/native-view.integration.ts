@@ -28,7 +28,8 @@ import { browserPageView, browserPageWindow } from './page-window';
 const directory = process.env.MIXDOG_INPUT_ISOLATION_DIRECTORY!;
 const logPath = process.env.MIXDOG_INPUT_ISOLATION_LOG!;
 process.env.MIXDOG_DATA_DIR = join(directory, 'data');
-process.env.MIXDOG_BROWSER_NATIVE_VIEW = '1';
+// Exercise the production default, not a developer-only opt-in.
+delete process.env.MIXDOG_BROWSER_NATIVE_VIEW;
 app.setPath('userData', join(directory, 'profile'));
 if (!process.argv.includes('--gpu')) app.disableHardwareAcceleration();
 // Same Windows occlusion setting as the desktop app (see main/index.ts).
@@ -357,6 +358,14 @@ async function run(): Promise<void> {
       })
     );
     log(`idle presented pane cpu: ${JSON.stringify(idleCpu)}`);
+
+    // Native wheel input scrolls the page without a renderer pixel relay.
+    await guest.executeJavaScript('window.scrollTo(0, 0)');
+    guest.sendInputEvent({ type: 'mouseWheel', x: 500, y: 400, deltaX: 0, deltaY: -120 });
+    await eventually(() => guest.executeJavaScript('window.scrollY'), (value) => Number(value) > 0);
+    assert.ok(presented(), 'scrolling must keep the page natively presented');
+    await guest.executeJavaScript('window.scrollTo(0, 0)');
+    log('native wheel scrolls without leaving native presentation');
 
     // Native human input takes over from a waiting agent command.
     for (const [label, send] of [

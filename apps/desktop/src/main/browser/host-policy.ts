@@ -8,6 +8,12 @@ import type { DesktopBrowserPageControl, DesktopBrowserViewportConfig } from '..
 import type { BrowserCommand } from './command';
 import type { BrowserUrlPolicy } from './url-policy';
 
+/** Local panes use Chromium's own input and compositor by default. Keep an
+ * explicit opt-out for environments that need the pixel presentation path. */
+export function browserNativeViewEnabled(value = process.env.MIXDOG_BROWSER_NATIVE_VIEW): boolean {
+  return value === undefined || value === '' || /^(?:1|true|yes)$/i.test(value);
+}
+
 /** Private/LAN/Tailscale addresses are the user's own network when the browser
  *  and the session's work both run on this PC, so they are allowed there. A
  *  session working against a remote server keeps them blocked. The env flag

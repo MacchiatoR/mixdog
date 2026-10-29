@@ -1,4 +1,4 @@
-/** Opt-in native presentation (MIXDOG_BROWSER_NATIVE_VIEW): the Browser pane
+/** Default native presentation (opt out with MIXDOG_BROWSER_NATIVE_VIEW=0): the Browser pane
  *  shows the page itself over its surface, so a person scrolls, clicks and
  *  types on the real page instead of a sampled image.
  *

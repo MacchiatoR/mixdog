@@ -20,7 +20,7 @@ import { createBrowserDisplayTracking } from './display-tracking';
 import { createBrowserDocuments } from './documents';
 import { browserDocumentId, BrowserGuestStateStore } from './guest-state';
 import { createBrowserHostPageIdentity } from './host-page-identity';
-import { browserUrlPolicyFromEnvironment } from './host-policy';
+import { browserNativeViewEnabled, browserUrlPolicyFromEnvironment } from './host-policy';
 import { createBrowserIntercept } from './intercept';
 import { createBrowserLeaveConfirmation } from './leave-confirmation';
 import { createBrowserLinkedSignIns } from './linked-sign-in';
@@ -259,7 +259,7 @@ export function createBrowserHostFoundation(
 
   const urlPolicy = browserUrlPolicyFromEnvironment({ remote: options.remoteSession });
   const urls = createBrowserUrlAdmission({ policy: urlPolicy });
-  const nativeView = /^(?:1|true|yes)$/i.test(String(process.env.MIXDOG_BROWSER_NATIVE_VIEW || ''));
+  const nativeView = browserNativeViewEnabled();
   const storage = createBrowserHostStorage(window.webContents.session, state, sessions, urls, options.onDiagnostic);
   const devtools = createBrowserHostDevtools(state, urlPolicy, storage.partition.permissions.refused);
   const displayTextures = createBrowserHostTextures(window, state);
