@@ -159,6 +159,9 @@ html[data-mx-input="pointer"] .browser-pane-address:focus {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  /* Both the dock's portalled host and the main sheet clip rounded corners.
+     Keep the rectangular native view inside that clip, not just in main tabs. */
+  padding: 0 3px 3px;
 }
 
 .browser-pane-content.is-device-frame {
@@ -803,14 +806,6 @@ html[data-mx-input="pointer"] .browser-pane-address:focus {
   pointer-events: none;
 }
 
-/* Main workspace tab: no dock header (the tab strip is the header) and no
-   footer. The page sits inside the sheet's content box: a 3px inset keeps the
-   native view clear of the sheet's rounded bottom corners (r=10px), and the
-   viewport rounds its own bottom corners like the surface stack. */
-.browser-pane[data-browser-mode="main"] .browser-pane-content {
-  padding: 0 3px 3px;
-}
-
 /* Popups the page opened: a compact row under the nav row, only with 2+ pages. */
 .browser-pane-popup-tabs {
   flex: none;
@@ -819,7 +814,9 @@ html[data-mx-input="pointer"] .browser-pane-address:focus {
 }
 
 .browser-pane[data-browser-mode="main"] .browser-pane-viewport {
-  border-radius: 0 0 7px 7px;
+  /* The content inset clears the sheet corners. Clipping the viewport itself
+     would fail the native presentation overlap check. */
+  border-radius: 0;
 }
 
 /* Until the first paint: the app sheet, a spinner and the host. */

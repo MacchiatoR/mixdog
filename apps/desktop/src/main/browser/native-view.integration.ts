@@ -209,13 +209,45 @@ async function run(): Promise<void> {
         return (['x', 'y', 'width', 'height'] as const).every((key) => Math.abs(actual[key] - pane[key]) <= 1);
       }, Boolean);
       const resized = view.getBounds();
-      assert.ok(Math.abs(resized.width - width) <= 1, `page must follow the panel width ${width}`);
+      assert.ok(
+        Math.abs(resized.width - initialBounds.width - (width - 600)) <= 1,
+        `page must follow the panel width ${width} while preserving its inset`
+      );
       assert.ok(
         Math.abs(resized.x + resized.width - initialBounds.x - initialBounds.width) <= 1,
         'the page and panel must keep their right edge aligned during left-edge resizing'
       );
     }
     log('panel-driven shrink and leftward expansion keep the adopted page aligned');
+    // Main tabs have different clipping and chrome from the side panel.
+    // A rounded viewport used to fail the corner overlap hit tests and
+    // silently leave all main-tab interaction on the sampled pixel surface.
+    await shell.executeJavaScript("window.setBrowserMode('main')");
+    await eventually(
+      () => shell.executeJavaScript("document.querySelector('.browser-pane')?.dataset.browserMode"),
+      (value) => value === 'main'
+    );
+    await eventually(async () => {
+      const pane = await surfaceRect();
+      const actual = view.getBounds();
+      return presented() &&
+        (['x', 'y', 'width', 'height'] as const).every((key) => Math.abs(actual[key] - pane[key]) <= 1);
+    }, Boolean);
+    log('main workspace tab presents the page natively after switching from the side panel');
+    // The live sidebar's 13px resize strip overlaps the native page by 6px.
+    // Only that intended overlap may stay underneath the native view.
+    await shell.executeJavaScript(`(() => {
+      const r = document.querySelector('.browser-isolated-surface').getBoundingClientRect();
+      const handle = document.createElement('div');
+      handle.id = 'sidebar-resize-fixture';
+      handle.className = 'workbench-side-panel-resize';
+      handle.style.cssText = 'position:fixed;z-index:99999;left:' + (r.left - 7) + 'px;top:' + r.top + 'px;width:13px;height:' + r.height + 'px';
+      document.body.append(handle);
+    })()`);
+    await pause(600);
+    assert.ok(presented(), 'the resize strip must not force the main tab into pixel presentation');
+    await shell.executeJavaScript("document.getElementById('sidebar-resize-fixture').remove()");
+    log('sidebar resize-strip overlap preserves native presentation');
     const rect = await surfaceRect();
     const bounds = view.getBounds();
     for (const key of ['x', 'y', 'width', 'height'] as const) {

@@ -226,7 +226,11 @@ export const IsolatedBrowserView = forwardRef<
             left + 1 + ((right - left - 2) * column) / 4,
             top + 1 + ((bottom - top - 2) * row) / 4
           );
-          if (!hit || !face.contains(hit)) return null;
+          // The sidebar/dock resize strip deliberately straddles the pane
+          // edge (pane-layout.css). A native view may cover its overlapping
+          // half; the exposed half remains draggable. It is not an overlay
+          // like a menu or dialog that requires pixel presentation.
+          if (!hit || (!face.contains(hit) && !hit.classList.contains('workbench-side-panel-resize'))) return null;
         }
       }
       return { x: left, y: top, width: right - left, height: bottom - top };
